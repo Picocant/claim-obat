@@ -81,6 +81,102 @@ $sep_ids     = $_POST['sep_id']     ?? [];
 $resep_ids   = $_POST['resep_id']   ?? [];
 $berkas_ids  = $_POST['berkas_id']  ?? [];
 $resume_ids  = $_POST['resume_id']  ?? [];
+$echo_ids    = $_POST['echo_id']    ?? [];
+$eeg_ids     = $_POST['eeg_id']     ?? [];
+$nota_ids    = $_POST['nota_id']    ?? [];
+$penyerahan_ids = $_POST['penyerahan_id'] ?? [];
+$hba1c_ids   = $_POST['hba1c_id']   ?? [];
+$mmse_ids    = $_POST['mmse_id']    ?? [];
+$ekg_ids     = $_POST['ekg_id']     ?? [];
+
+// Debug: uncomment untuk test
+// echo "Nota IDs: " . count($nota_ids) . "<br>";
+// echo "Penyerahan IDs: " . count($penyerahan_ids) . "<br>";
+// var_dump($nota_ids);
+// var_dump($penyerahan_ids);
+// exit;
+
+/* =========================
+   FILTER REGISTRASI
+   ========================= */
+$filter_registrasi_mode  = $_POST['filter_registrasi_mode']  ?? 'all';
+$filter_registrasi_limit = isset($_POST['filter_registrasi_limit']) ? (int)$_POST['filter_registrasi_limit'] : 5;
+
+/* =========================
+   FILTER RESEP
+   ========================= */
+$filter_resep_status = $_POST['filter_resep_status'] ?? 'semua';
+$filter_resep_tanggal_dari = $_POST['filter_resep_tanggal_dari'] ?? '';
+$filter_resep_tanggal_sampai = $_POST['filter_resep_tanggal_sampai'] ?? '';
+$filter_resep_limit = isset($_POST['filter_resep_limit']) ? (int)$_POST['filter_resep_limit'] : 0;
+$filter_resep_urutan = $_POST['filter_resep_urutan'] ?? 'DESC';
+
+/* =========================
+   CEK APAKAH ADA YANG DIPILIH
+   ========================= */
+$ada_pilihan = !empty($sep_ids) || !empty($resep_ids) || !empty($berkas_ids) || 
+               !empty($resume_ids) || !empty($echo_ids) || !empty($eeg_ids) || 
+               !empty($nota_ids) || !empty($penyerahan_ids) || !empty($hba1c_ids) || 
+               !empty($mmse_ids) || !empty($ekg_ids);
+
+if (!$ada_pilihan) {
+    ?>
+    <!DOCTYPE html>
+    <html lang='id'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Peringatan</title>
+        <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+        <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'>
+        <style>
+            .modal-backdrop-custom {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                z-index: 1040;
+            }
+            .modal-custom {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1050;
+                width: 90%;
+                max-width: 500px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class='modal-backdrop-custom'></div>
+        <div class='modal-custom'>
+            <div class='modal-content'>
+                <div class='modal-header bg-danger text-white'>
+                    <h5 class='modal-title'>
+                        <i class='bi bi-exclamation-triangle-fill'></i> Tidak Ada Data Yang Dipilih
+                    </h5>
+                </div>
+                <div class='modal-body text-center py-4'>
+                    <i class='bi bi-inbox' style='font-size: 4rem; color: #dc3545;'></i>
+                    <p class='mt-3 mb-0' style='font-size: 16px; color: #666;'>
+                        Silakan pilih minimal satu data untuk dicetak.
+                    </p>
+                </div>
+                <div class='modal-footer justify-content-center'>
+                    <a href='previewriwayat.php?no_rkm_medis=<?= htmlspecialchars($no_rkm_medis) ?>' class='btn btn-primary btn-lg'>
+                        <i class='bi bi-arrow-left'></i> Kembali ke Preview
+                    </a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 /* =========================
    AMBIL DATA PASIEN
@@ -118,14 +214,228 @@ $dompdf = new Dompdf($options);
 
 ob_start();
 ?>
-
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
 <style>
-body { font-size: 11px; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #000; padding: 5px; vertical-align: top; }
-th { background: #f2f2f2; }
-h4 { margin: 8px 0 4px; }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@page {
+    margin: 15mm 20mm;
+}
+
+body { 
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #333;
+    padding: 15px 20px;
+    margin: 0 auto;
+    max-width: 210mm;
+}
+
+h4 { 
+    font-size: 13px;
+    font-weight: bold;
+    margin: 12px 0 6px 0;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #333;
+    text-transform: uppercase;
+    color: #000;
+}
+
+h5 {
+    font-size: 11px;
+    font-weight: bold;
+    margin: 8px 0 5px 0;
+    color: #444;
+}
+
+table { 
+    border-collapse: collapse; 
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+th, td { 
+    border: 1px solid #666;
+    padding: 4px 6px;
+    vertical-align: top;
+    font-size: 10px;
+    line-height: 1.2;
+}
+
+th { 
+    background: #e8e8e8;
+    font-weight: bold;
+    text-align: left;
+    color: #000;
+}
+
+td {
+    background: #fff;
+}
+
+tr:nth-child(even) td {
+    background: #f9f9f9;
+}
+
+p {
+    margin: 5px 0;
+    line-height: 1.3;
+}
+
+em {
+    color: #666;
+    font-style: italic;
+}
+
+strong {
+    font-weight: bold;
+    color: #000;
+}
+
+/* Styling untuk tabel berkas */
+.tbl-berkas { 
+    width: 100%; 
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+}
+
+.tbl-berkas th, .tbl-berkas td { 
+    border: 1px solid #666;
+    padding: 5px 6px;
+    vertical-align: top;
+}
+
+.tbl-berkas th { 
+    background: #e8e8e8;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Styling untuk tabel resume */
+.tbl-resume {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 9px;
+    page-break-inside: avoid;
+}
+
+.tbl-resume thead th {
+    background: #d0d0d0;
+    border: 1px solid #666;
+    padding: 4px 3px;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.tbl-resume tbody td {
+    border: 1px solid #999;
+    padding: 3px 4px;
+    vertical-align: top;
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+.tbl-resume tbody tr:hover {
+    background: #f5f5f5;
+}
+
+.berkas-preview-img {
+    max-width: 260px;
+    max-height: 180px;
+    object-fit: contain;
+    display: block;
+    margin: 5px auto;
+    border: 1px solid #dddddd;
+}
+
+/* Page break */
+.page-break {
+    page-break-after: always;
+}
+
+/* Spacing helper */
+.mb-10 { margin-bottom: 10px; }
+.mb-15 { margin-bottom: 15px; }
+.mt-10 { margin-top: 10px; }
+.mt-15 { margin-top: 15px; }
+
+/* Kop Berkas */
+.kop-berkas {
+    width: 100%;
+    margin-bottom: 20px;
+}
+.kop-berkas table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+}
+.kop-berkas table td {
+    border: none;
+}
+.kop-berkas .logo-cell {
+    width: 90px;
+    vertical-align: top;
+}
+.kop-berkas .logo-cell img {
+    width: 70px;
+    height: auto;
+    display: block;
+    margin-top: 2px;
+}
+.kop-berkas .title-cell {
+    text-align: center;
+    vertical-align: top;
+    line-height: 1.15;
+}
+.kop-berkas .title-cell .t1 {
+    font-size: 20px;
+    font-weight: normal;
+    letter-spacing: .5px;
+    white-space: nowrap;
+}
+.kop-berkas .title-cell .t2,
+.kop-berkas .title-cell .t3,
+.kop-berkas .title-cell .t4 {
+    font-size: 12px;
+}
+.kop-berkas .spacer-cell {
+    width: 90px;
+}
 </style>
+</head>
+<body>
+
+<!-- =======================
+     KOP BERKAS
+     ======================= -->
+<div class="kop-berkas">
+    <table>
+        <tr>
+            <td class="logo-cell">
+                <img src="http://localhost/webapps/hasilcetakclaimobat/pages/assets/logorsar.png" alt="logo">
+            </td>
+            <td class="title-cell">
+                <div class="t1">RUMAH SAKIT UMUM DAERAH dr. ABDOER RAHEM</div>
+                <div class="t2">Jl. Anggrek No. 68, Kelurahan. Patokan , Kecamatan. Situbondo,</div>
+                <div class="t3">0338-671028</div>
+                <div class="t4">E-mail : rsu.situbondo@yahoo.com</div>
+            </td>
+            <td class="spacer-cell"></td>
+        </tr>
+    </table>
+</div>
 
 <!-- =======================
      1. DATA PASIEN
@@ -181,17 +491,18 @@ if (empty($pasien)) {
 ?>
 </table>
 
-<br>
-
-
-<br>
-
 <!-- =======================
      2. DATA REGISTRASI
      ======================= -->
 <h4>2. Data Registrasi</h4>
 
 <?php
+// Terapkan filter registrasi pada query
+$limitSql_registrasi = '';
+if ($filter_registrasi_mode === 'last' && $filter_registrasi_limit > 0) {
+    $limitSql_registrasi = "LIMIT $filter_registrasi_limit";
+}
+
 $query_rawat = $koneksi->query("
     SELECT 
         rp.no_rawat,
@@ -202,6 +513,7 @@ $query_rawat = $koneksi->query("
     LEFT JOIN poliklinik p ON rp.kd_poli = p.kd_poli
     WHERE rp.no_rkm_medis = '$no_rkm_medis'
     ORDER BY rp.no_rawat DESC
+    $limitSql_registrasi
 ");
 
 if (!$query_rawat || $query_rawat->num_rows == 0) {
@@ -323,6 +635,7 @@ if (!$d) {
 }
 ?>
 <div style="page-break-after:always;"></div>
+
 <!-- =======================
      TEMPLATE SEP
      ======================= -->
@@ -443,7 +756,6 @@ $BASE_BERKASRAWAT = "http://192.168.0.100/webapps/berkasrawat/";
 if (!$qSep || $qSep->num_rows == 0) {
     echo '<p><em>Tidak ada data SEP.</em></p>';
 } else {
-
     while ($sep = $qSep->fetch_assoc()) {
         $file_db = $sep['lokasi_file'] ?? '';
         if (!$file_db) continue;
@@ -481,16 +793,345 @@ if (!$qSep || $qSep->num_rows == 0) {
     }
 }
 ?>
+
+<?php if (!empty($eeg_ids)): ?>
+<!-- =======================
+     4. ELECTROENCEPHALOGRAPHY (EEG)
+     ======================= -->
+<h4>4. Electroencephalography (EEG)</h4>
+
+<?php
+$q_eeg = $koneksi->query("
+    SELECT 
+        b.id,
+        b.no_rkm_medis,
+        b.kode_berkas,
+        b.nama_berkas,
+        b.lokasi_file,
+        b.tgl_upload
+    FROM berkas_digital_apotek b
+    WHERE b.no_rkm_medis = '$no_rkm_medis'
+      AND b.kode_berkas = 'EEG'
+    ORDER BY b.tgl_upload DESC
+");
+
+if ($q_eeg && $q_eeg->num_rows > 0) {
+?>
+<table class="tbl-berkas" style="page-break-inside:avoid;">
+  <tr>
+    <th width="5%">No</th>
+    <th width="20%">No RM</th>
+    <th width="20%">Tanggal Upload</th>
+    <th>Preview</th>
+  </tr>
+  <?php
+  $no = 1;
+  while ($row = $q_eeg->fetch_assoc()) {
+      // Filter berdasarkan checkbox
+      if (!empty($eeg_ids) && !in_array($row['id'], $eeg_ids)) {
+          continue;
+      }
+      
+      $file_db = $row['lokasi_file'] ?? '';
+      if (!$file_db) continue;
+
+      $url_file = "http://localhost/webapps/" . $file_db;
+      $ext = strtolower(pathinfo($file_db, PATHINFO_EXTENSION));
+  ?>
+  <tr>
+    <td style="text-align:center;"><?= $no++ ?></td>
+    <td><?= htmlspecialchars($row['no_rkm_medis']) ?></td>
+    <td><?= date('d/m/Y H:i', strtotime($row['tgl_upload'])) ?></td>
+    <td style="text-align:center;">
+      <?php
+      if (in_array($ext, ['jpg','jpeg','png','webp'])) {
+          echo '<img class="berkas-preview-img" src="'.$url_file.'" alt="EEG">';
+      }
+      elseif ($ext === 'pdf') {
+          $res = pdfUrlToPngDataUri($url_file);
+          if ($res['ok']) {
+              echo '<img class="berkas-preview-img" src="'.$res['data'].'" alt="EEG PDF">';
+          } else {
+              echo '<em>Gagal tampilkan PDF: '.htmlspecialchars(basename($file_db)).'</em>';
+          }
+      } else {
+          echo '<em>Format tidak didukung: '.htmlspecialchars(basename($file_db)).'</em>';
+      }
+      ?>
+    </td>
+  </tr>
+  <?php } ?>
+</table>
+<?php
+} else {
+    echo '<p><em>Tidak ada data EEG untuk pasien ini.</em></p>';
+}
+?>
+<?php endif; // end EEG ?>
+
+<?php if (!empty($ekg_ids)): ?>
+<!-- =======================
+     5. ELEKTROKARDIOGRAM (EKG)
+     ======================= -->
+<h4>5. Elektrokardiogram (EKG)</h4>
+
+<?php
+$q_ekg = $koneksi->query("
+    SELECT 
+        b.id,
+        b.no_rkm_medis,
+        b.kode_berkas,
+        b.nama_berkas,
+        b.lokasi_file,
+        b.tgl_upload
+    FROM berkas_digital_apotek b
+    WHERE b.no_rkm_medis = '$no_rkm_medis'
+      AND b.kode_berkas = 'EKG'
+    ORDER BY b.tgl_upload DESC
+");
+
+if ($q_ekg && $q_ekg->num_rows > 0) {
+?>
+<table class="tbl-berkas" style="page-break-inside:avoid;">
+  <tr>
+    <th width="5%">No</th>
+    <th width="20%">No RM</th>
+    <th width="20%">Tanggal Upload</th>
+    <th>Preview</th>
+  </tr>
+  <?php
+  $no = 1;
+  while ($row = $q_ekg->fetch_assoc()) {
+      // Filter berdasarkan checkbox
+      if (!empty($ekg_ids) && !in_array($row['id'], $ekg_ids)) {
+          continue;
+      }
+      
+      $file_db = $row['lokasi_file'] ?? '';
+      if (!$file_db) continue;
+
+      $url_file = "http://localhost/webapps/" . $file_db;
+      $ext = strtolower(pathinfo($file_db, PATHINFO_EXTENSION));
+  ?>
+  <tr>
+    <td style="text-align:center;"><?= $no++ ?></td>
+    <td><?= htmlspecialchars($row['no_rkm_medis']) ?></td>
+    <td><?= date('d/m/Y H:i', strtotime($row['tgl_upload'])) ?></td>
+    <td style="text-align:center;">
+      <?php
+      if (in_array($ext, ['jpg','jpeg','png','webp'])) {
+          echo '<img class="berkas-preview-img" src="'.$url_file.'" alt="EKG">';
+      }
+      elseif ($ext === 'pdf') {
+          $res = pdfUrlToPngDataUri($url_file);
+          if ($res['ok']) {
+              echo '<img class="berkas-preview-img" src="'.$res['data'].'" alt="EKG PDF">';
+          } else {
+              echo '<em>Gagal tampilkan PDF: '.htmlspecialchars(basename($file_db)).'</em>';
+          }
+      } else {
+          echo '<em>Format tidak didukung: '.htmlspecialchars(basename($file_db)).'</em>';
+      }
+      ?>
+    </td>
+  </tr>
+  <?php } ?>
+</table>
+<?php
+} else {
+    echo '<p><em>Tidak ada data EKG untuk pasien ini.</em></p>';
+}
+?>
+<?php endif; // end EKG ?>
+
+<?php if (!empty($hba1c_ids)): ?>
+<!-- =======================
+     6. HEMOGLOBIN A1C (HBA1C)
+     ======================= -->
+<h4>6. Hemoglobin A1c (HbA1c)</h4>
+
+<?php
+$q_hba1c = $koneksi->query("
+    SELECT 
+        b.id,
+        b.no_rkm_medis,
+        b.kode_berkas,
+        b.nama_berkas,
+        b.lokasi_file,
+        b.tgl_upload
+    FROM berkas_digital_apotek b
+    WHERE b.no_rkm_medis = '$no_rkm_medis'
+      AND b.kode_berkas = 'HBA1C'
+    ORDER BY b.tgl_upload DESC
+");
+
+if ($q_hba1c && $q_hba1c->num_rows > 0) {
+?>
+<table class="tbl-berkas" style="page-break-inside:avoid;">
+  <tr>
+    <th width="5%">No</th>
+    <th width="20%">No RM</th>
+    <th width="20%">Tanggal Upload</th>
+    <th>Preview</th>
+  </tr>
+  <?php
+  $no = 1;
+  while ($row = $q_hba1c->fetch_assoc()) {
+      // Filter berdasarkan checkbox
+      if (!empty($hba1c_ids) && !in_array($row['id'], $hba1c_ids)) {
+          continue;
+      }
+      
+      $file_db = $row['lokasi_file'] ?? '';
+      if (!$file_db) continue;
+
+      $url_file = "http://localhost/webapps/" . $file_db;
+      $ext = strtolower(pathinfo($file_db, PATHINFO_EXTENSION));
+  ?>
+  <tr>
+    <td style="text-align:center;"><?= $no++ ?></td>
+    <td><?= htmlspecialchars($row['no_rkm_medis']) ?></td>
+    <td><?= date('d/m/Y H:i', strtotime($row['tgl_upload'])) ?></td>
+    <td style="text-align:center;">
+      <?php
+      if (in_array($ext, ['jpg','jpeg','png','webp'])) {
+          echo '<img class="berkas-preview-img" src="'.$url_file.'" alt="HbA1c">';
+      }
+      elseif ($ext === 'pdf') {
+          $res = pdfUrlToPngDataUri($url_file);
+          if ($res['ok']) {
+              echo '<img class="berkas-preview-img" src="'.$res['data'].'" alt="HbA1c PDF">';
+          } else {
+              echo '<em>Gagal tampilkan PDF: '.htmlspecialchars(basename($file_db)).'</em>';
+          }
+      } else {
+          echo '<em>Format tidak didukung: '.htmlspecialchars(basename($file_db)).'</em>';
+      }
+      ?>
+    </td>
+  </tr>
+  <?php } ?>
+</table>
+<?php
+} else {
+    echo '<p><em>Tidak ada data HbA1c untuk pasien ini.</em></p>';
+}
+?>
+<?php endif; // end HbA1c ?>
+
+<?php if (!empty($mmse_ids)): ?>
+<!-- =======================
+     7. MINI-MENTAL STATE EXAMINATION (MMSE)
+     ======================= -->
+<h4>7. Mini-Mental State Examination (MMSE)</h4>
+
+<?php
+$q_mmse = $koneksi->query("
+    SELECT 
+        b.id,
+        b.no_rkm_medis,
+        b.kode_berkas,
+        b.nama_berkas,
+        b.lokasi_file,
+        b.tgl_upload
+    FROM berkas_digital_apotek b
+    WHERE b.no_rkm_medis = '$no_rkm_medis'
+      AND b.kode_berkas = 'MMSE'
+    ORDER BY b.tgl_upload DESC
+");
+
+if ($q_mmse && $q_mmse->num_rows > 0) {
+?>
+<table class="tbl-berkas" style="page-break-inside:avoid;">
+  <tr>
+    <th width="5%">No</th>
+    <th width="20%">No RM</th>
+    <th width="20%">Tanggal Upload</th>
+    <th>Preview</th>
+  </tr>
+  <?php
+  $no = 1;
+  while ($row = $q_mmse->fetch_assoc()) {
+      // Filter berdasarkan checkbox
+      if (!empty($mmse_ids) && !in_array($row['id'], $mmse_ids)) {
+          continue;
+      }
+      
+      $file_db = $row['lokasi_file'] ?? '';
+      if (!$file_db) continue;
+
+      $url_file = "http://localhost/webapps/" . $file_db;
+      $ext = strtolower(pathinfo($file_db, PATHINFO_EXTENSION));
+  ?>
+  <tr>
+    <td style="text-align:center;"><?= $no++ ?></td>
+    <td><?= htmlspecialchars($row['no_rkm_medis']) ?></td>
+    <td><?= date('d/m/Y H:i', strtotime($row['tgl_upload'])) ?></td>
+    <td style="text-align:center;">
+      <?php
+      if (in_array($ext, ['jpg','jpeg','png','webp'])) {
+          echo '<img class="berkas-preview-img" src="'.$url_file.'" alt="MMSE">';
+      }
+      elseif ($ext === 'pdf') {
+          $res = pdfUrlToPngDataUri($url_file);
+          if ($res['ok']) {
+              echo '<img class="berkas-preview-img" src="'.$res['data'].'" alt="MMSE PDF">';
+          } else {
+              echo '<em>Gagal tampilkan PDF: '.htmlspecialchars(basename($file_db)).'</em>';
+          }
+      } else {
+          echo '<em>Format tidak didukung: '.htmlspecialchars(basename($file_db)).'</em>';
+      }
+      ?>
+    </td>
+  </tr>
+  <?php } ?>
+</table>
+<?php
+} else {
+    echo '<p><em>Tidak ada data MMSE untuk pasien ini.</em></p>';
+}
+?>
+<?php endif; // end MMSE ?>
+
 <div style="page-break-after:always;"></div>
 
+<?php if (!empty($resep_ids)): ?>
 <!-- =======================
-     4. TEMPLATE RESEP
+     8. TEMPLATE RESEP
      ======================= -->
-     <h4>4. RESEP</h4>
+<h4>8. RESEP</h4>
 <?php
 // WAJIB: pastikan file ini ADA:
 // D:\xampp\htdocs\webapps\hasilcetakclaimobat\pages\phpqrcode\qrlib.php
 require_once __DIR__ . '/../phpqrcode/qrlib.php';
+
+// Buat kondisi WHERE tambahan untuk filter status
+$whereResepStatus = '';
+if ($filter_resep_status === 'ralan') {
+    $whereResepStatus = "AND ro.status = 'ralan'";
+} elseif ($filter_resep_status === 'ranap') {
+    $whereResepStatus = "AND ro.status = 'ranap'";
+}
+// jika 'semua', tidak ada filter tambahan
+
+// Buat kondisi WHERE untuk filter tanggal
+$whereResepTanggal = '';
+if (!empty($filter_resep_tanggal_dari)) {
+    $whereResepTanggal .= " AND DATE(ro.tgl_peresepan) >= '$filter_resep_tanggal_dari'";
+}
+if (!empty($filter_resep_tanggal_sampai)) {
+    $whereResepTanggal .= " AND DATE(ro.tgl_peresepan) <= '$filter_resep_tanggal_sampai'";
+}
+
+// Buat LIMIT untuk filter jumlah terbaru
+$limitResep = '';
+if ($filter_resep_limit > 0) {
+    $limitResep = "LIMIT $filter_resep_limit";
+}
+
+// Validasi urutan (hanya terima DESC atau ASC)
+$orderResep = ($filter_resep_urutan === 'ASC') ? 'ASC' : 'DESC';
 
 // ambil semua resep pasien
 $qResep = $koneksi->query("
@@ -509,7 +1150,10 @@ $qResep = $koneksi->query("
     LEFT JOIN penjab pj ON rp.kd_pj = pj.kd_pj
     LEFT JOIN dokter d ON rp.kd_dokter = d.kd_dokter
     WHERE rp.no_rkm_medis = '$no_rkm_medis'
-    ORDER BY ro.no_resep DESC
+    $whereResepStatus
+    $whereResepTanggal
+    ORDER BY ro.no_resep $orderResep
+    $limitResep
 ");
 ?>
 
@@ -676,6 +1320,9 @@ $qResep = $koneksi->query("
 
 <?php while ($r = $qResep->fetch_assoc()): ?>
   <?php
+    // Filter checkbox
+    if (!empty($resep_ids) && !in_array($r['no_resep'], $resep_ids)) continue;
+
     // fallback tanggal kalau null
     $tgl_resep = $r['tanggal_resep'] ?: date('Y-m-d');
 
@@ -693,12 +1340,32 @@ $qResep = $koneksi->query("
     // === AMBIL FOTO BUKTI PENYERAHAN (BERDASARKAN NO RESEP) ===
 $base64_serah = null;
 
+// ===== APPLY FILTER RESEP KE PENYERAHAN OBAT =====
+$whereSerahStatus = '';
+if ($filter_resep_status && $filter_resep_status !== 'semua') {
+    $whereSerahStatus = " AND ro.status = '" . ($filter_resep_status === 'ralan' ? 'Ralan' : 'Ranap') . "'";
+}
+
+$whereSerahTanggal = '';
+if (!empty($filter_resep_tanggal_dari) && !empty($filter_resep_tanggal_sampai)) {
+    $whereSerahTanggal = " AND DATE(ro.tgl_peresepan) BETWEEN '$filter_resep_tanggal_dari' AND '$filter_resep_tanggal_sampai'";
+}
+
+$orderSerah = ($filter_resep_urutan === 'ASC') ? 'ASC' : 'DESC';
+$limitSerah = '';
+if (!empty($filter_resep_limit) && intval($filter_resep_limit) > 0) {
+    $limitSerah = " LIMIT " . intval($filter_resep_limit);
+}
+
 $qSerah = $koneksi->query("
   SELECT photo 
-  FROM bukti_penyerahan_resep_obat
-  WHERE no_resep = '{$r['no_resep']}'
-  ORDER BY no_resep DESC
-  LIMIT 1
+  FROM bukti_penyerahan_resep_obat bpo
+  INNER JOIN resep_obat ro ON bpo.no_resep = ro.no_resep
+  WHERE bpo.no_resep = '{$r['no_resep']}'
+  $whereSerahStatus
+  $whereSerahTanggal
+  ORDER BY bpo.no_resep $orderSerah
+  $limitSerah
 ");
 
 if ($qSerah && $qSerah->num_rows > 0) {
@@ -830,13 +1497,56 @@ if ($qSerah && $qSerah->num_rows > 0) {
 
 <?php endwhile; ?>
 <?php endif; ?>
+<?php endif; // end resep_ids ?>
 
 
+
+
+<?php if (!empty($nota_ids)): ?>
+<!-- =======================
+     9. NOTA OBAT
+     ======================= -->
+<h4>9. NOTA OBAT</h4>
 
 <?php
 /* =====================
    TEMPLATE NOTA OBAT
    ===================== */
+// ===== APPLY FILTER RESEP KE NOTA OBAT =====
+$whereNotaStatus = '';
+if ($filter_resep_status && $filter_resep_status !== 'semua') {
+    $whereNotaStatus = " AND dpo.status = '" . ($filter_resep_status === 'ralan' ? 'Ralan' : 'Ranap') . "'";
+}
+
+$whereNotaTanggal = '';
+if (!empty($filter_resep_tanggal_dari) && !empty($filter_resep_tanggal_sampai)) {
+    $whereNotaTanggal = " AND DATE(dpo.tgl_perawatan) BETWEEN '$filter_resep_tanggal_dari' AND '$filter_resep_tanggal_sampai'";
+}
+
+$orderNota = ($filter_resep_urutan === 'ASC') ? 'ASC' : 'DESC';
+$limitNota = '';
+if (!empty($filter_resep_limit) && intval($filter_resep_limit) > 0) {
+    $limitNota = " LIMIT " . intval($filter_resep_limit);
+}
+
+// Filter berdasarkan checkbox yang dipilih
+$whereNotaIds = '';
+if (!empty($nota_ids)) {
+    $notaConditions = [];
+    foreach ($nota_ids as $id) {
+        $parts = explode('|', $id);
+        if (count($parts) === 3) {
+            $no_rawat_safe = $koneksi->real_escape_string($parts[0]);
+            $tanggal_safe = $koneksi->real_escape_string($parts[1]);
+            $jam_safe = $koneksi->real_escape_string($parts[2]);
+            $notaConditions[] = "(dpo.no_rawat = '$no_rawat_safe' AND DATE(dpo.tgl_perawatan) = '$tanggal_safe' AND dpo.jam = '$jam_safe')";
+        }
+    }
+    if (!empty($notaConditions)) {
+        $whereNotaIds = " AND (" . implode(' OR ', $notaConditions) . ")";
+    }
+}
+
 $q_nota = $koneksi->query("
     SELECT
         rp.no_rkm_medis,
@@ -846,7 +1556,8 @@ $q_nota = $koneksi->query("
         d.nm_dokter AS pemberi_resep,
         MIN(ro.no_resep) AS no_resep,
         DATE(dpo.tgl_perawatan) AS tanggal,
-        dpo.jam
+        dpo.jam,
+        dpo.status
     FROM detail_pemberian_obat dpo
     JOIN reg_periksa rp ON rp.no_rawat = dpo.no_rawat
     JOIN pasien p ON p.no_rkm_medis = rp.no_rkm_medis
@@ -854,9 +1565,18 @@ $q_nota = $koneksi->query("
     LEFT JOIN dokter d ON d.kd_dokter = rp.kd_dokter
     LEFT JOIN resep_obat ro ON ro.no_rawat = dpo.no_rawat
     WHERE rp.no_rkm_medis = '$no_rkm_medis'
+    $whereNotaIds
+    $whereNotaStatus
+    $whereNotaTanggal
     GROUP BY dpo.no_rawat, dpo.tgl_perawatan, dpo.jam
-    ORDER BY dpo.tgl_perawatan DESC, dpo.jam DESC
+    ORDER BY dpo.tgl_perawatan $orderNota, dpo.jam $orderNota
+    $limitNota
 ");
+
+// Debug query nota
+if (!$q_nota) {
+    echo "<p style='color:red;'>Error Nota Query: " . $koneksi->error . "</p>";
+}
 
 /* helper format uang seperti di foto: 33,600.00 */
 function rp_foto($angka) {
@@ -1077,26 +1797,122 @@ function rp_foto($angka) {
     <div class="petugas">PETUGAS</div>
   </div>
 </div>
-<div style="page-break-after:always;"></div>
+<div class="page-break"></div>
 <?php endwhile; ?>
 <?php endif; ?>
+<?php endif; // end nota_ids ?>
+
+<?php if (!empty($penyerahan_ids)): ?>
 <!-- =======================
-     4. TEMPLATE BERKAS DIGITAL
+     10. PENYERAHAN OBAT
      ======================= -->
-<h4>5. Berkas Digital</h4>
+<h4>10. PENYERAHAN OBAT</h4>
 
-<style>
-  .tbl-berkas { width:100%; border-collapse:collapse; }
-  .tbl-berkas th, .tbl-berkas td { border:1px solid #000; padding:6px; vertical-align:top; }
-  .tbl-berkas th { background:#f2f2f2; }
+<?php
+// ===== APPLY FILTER RESEP KE PENYERAHAN OBAT =====
+$whereSerahStatus = '';
+if ($filter_resep_status && $filter_resep_status !== 'semua') {
+    $whereSerahStatus = " AND ro.status = '" . ($filter_resep_status === 'ralan' ? 'Ralan' : 'Ranap') . "'";
+}
 
-  .berkas-preview-img{
-    max-width:260px;
-    max-height:180px;
-    object-fit:contain;
-    display:block;
-  }
-</style>
+$whereSerahTanggal = '';
+if (!empty($filter_resep_tanggal_dari) && !empty($filter_resep_tanggal_sampai)) {
+    $whereSerahTanggal = " AND DATE(ro.tgl_peresepan) BETWEEN '$filter_resep_tanggal_dari' AND '$filter_resep_tanggal_sampai'";
+}
+
+$orderSerah = ($filter_resep_urutan === 'ASC') ? 'ASC' : 'DESC';
+$limitSerah = '';
+if (!empty($filter_resep_limit) && intval($filter_resep_limit) > 0) {
+    $limitSerah = " LIMIT " . intval($filter_resep_limit);
+}
+
+// Filter berdasarkan checkbox yang dipilih
+$whereSerahIds = '';
+if (!empty($penyerahan_ids)) {
+    $penyerahan_ids_safe = array_map(function($id) use ($koneksi) {
+        return "'" . $koneksi->real_escape_string($id) . "'";
+    }, $penyerahan_ids);
+    $whereSerahIds = " AND bpo.no_resep IN (" . implode(',', $penyerahan_ids_safe) . ")";
+}
+
+$q_serah = $koneksi->query("
+    SELECT 
+        bpo.no_resep,
+        bpo.photo,
+        ro.status,
+        DATE(ro.tgl_peresepan) AS tgl_penyerahan,
+        rp.no_rawat
+    FROM bukti_penyerahan_resep_obat bpo
+    INNER JOIN resep_obat ro ON bpo.no_resep = ro.no_resep
+    INNER JOIN reg_periksa rp ON ro.no_rawat = rp.no_rawat
+    WHERE rp.no_rkm_medis = '$no_rkm_medis'
+    $whereSerahIds
+    $whereSerahStatus
+    $whereSerahTanggal
+    ORDER BY bpo.no_resep $orderSerah
+    $limitSerah
+");
+
+// Debug query penyerahan
+if (!$q_serah) {
+    echo "<p style='color:red;'>Error Penyerahan Query: " . $koneksi->error . "</p>";
+}
+
+if (!$q_serah || $q_serah->num_rows == 0) {
+    echo '<p><em>Data penyerahan obat tidak ditemukan.</em></p>';
+} else {
+?>
+
+<table class="table table-sm table-bordered">
+    <thead>
+        <tr>
+            <th width="5%">No</th>
+            <th>No. Rawat</th>
+            <th>No. Resep</th>
+            <th>Jenis</th>
+            <th>Tanggal</th>
+            <th>Bukti Penyerahan</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php
+    $no = 1;
+    while ($s = $q_serah->fetch_assoc()) {
+        $foto_path = $_SERVER['DOCUMENT_ROOT'] . "/webapps/penyerahanresep/pages/upload/" . basename($s['photo']);
+        $base64_serah = null;
+        
+        if (file_exists($foto_path)) {
+            $ext = strtolower(pathinfo($foto_path, PATHINFO_EXTENSION));
+            $base64_serah = 'data:image/'.$ext.';base64,' . base64_encode(file_get_contents($foto_path));
+        }
+        
+        $jenis = ($s['status'] === 'Ralan') ? 'Rawat Jalan' : 'Rawat Inap';
+    ?>
+        <tr>
+            <td class="text-center"><?= $no++ ?></td>
+            <td><?= htmlspecialchars($s['no_rawat']) ?></td>
+            <td><?= htmlspecialchars($s['no_resep']) ?></td>
+            <td><?= $jenis ?></td>
+            <td><?= date('d/m/Y', strtotime($s['tgl_penyerahan'])) ?></td>
+            <td class="text-center">
+                <?php if ($base64_serah): ?>
+                    <img src="<?= $base64_serah ?>" style="max-width: 200px; max-height: 150px;">
+                <?php else: ?>
+                    <em>Foto tidak tersedia</em>
+                <?php endif; ?>
+            </td>
+        </tr>
+    <?php } ?>
+    </tbody>
+</table>
+
+<?php } ?>
+<?php endif; // end penyerahan_ids ?>
+
+<!-- =======================
+     11. BERKAS DIGITAL
+     ======================= -->
+<h4>11. Berkas Digital</h4>
 
 <?php
 // fallback kalau rawatList belum ada
@@ -1138,6 +1954,9 @@ if (!$qBerkas || $qBerkas->num_rows == 0) {
   <?php
   $no = 1;
   while ($b = $qBerkas->fetch_assoc()) {
+      // Filter checkbox
+      if (!empty($berkas_ids) && !in_array($b['no_rawat'], $berkas_ids)) continue;
+
       $dbVal = $b['lokasi_file'] ?? '';
       $fileName = basename($dbVal);
       $fsPath = $uploadFs . $fileName;
@@ -1195,13 +2014,11 @@ if (!$qBerkas || $qBerkas->num_rows == 0) {
 </table>
 <?php } ?>
 
-
-
-<div style="page-break-after:always;"></div>
+<?php if (!empty($resume_ids)): ?>
 <!-- =======================
-     5. RESUME PASIEN
+     12. RESUME PASIEN
      ======================= -->
-<h4>5. Resume Pasien</h4>
+<h4>12. Resume Pasien</h4>
 
 <?php
 $ada_resume = false;
@@ -1233,40 +2050,36 @@ if ($rj && $rj->num_rows > 0) {
     $ada_resume = true;
 ?>
 <h5>Rawat Jalan</h5>
-<table border="1" width="100%" cellpadding="5">
+<table class="tbl-resume">
+<thead>
 <tr>
-  <th>No</th>
-  <th>No Rawat</th>
-  <th>No Registrasi</th>
-  <th>Tanggal</th>
-  <th>Umur</th>
-  <th>Poliklinik</th>
-  <th>Dokter</th>
-  <th>Status</th>
-  <th>Keluhan</th>
-  <th>Diagnosa</th>
-  <th>Kondisi Pulang</th>
-  <th>Obat Pulang</th>
+  <th width="3%">No</th>
+  <th width="12%">Tanggal</th>
+  <th width="10%">Poliklinik</th>
+  <th width="12%">Dokter</th>
+  <th width="18%">Keluhan Utama</th>
+  <th width="15%">Diagnosa Utama</th>
+  <th width="10%">Kondisi Pulang</th>
+  <th width="20%">Obat Pulang</th>
 </tr>
+</thead>
+<tbody>
 <?php
 $no = 1;
 while ($r = $rj->fetch_assoc()) {
 ?>
 <tr>
-  <td><?= $no++ ?></td>
-  <td><?= $r['no_rawat'] ?></td>
-  <td><?= $r['no_reg'] ?></td>
-  <td><?= $r['tgl_registrasi'] ?></td>
-  <td><?= $r['umurdaftar'] ?></td>
-  <td><?= $r['nm_poli'] ?></td>
-  <td><?= $r['nm_dokter'] ?></td>
-  <td><?= $r['status_lanjut'] ?></td>
-  <td><?= nl2br($r['keluhan_utama']) ?></td>
-  <td><?= $r['diagnosa_utama'] ?></td>
-  <td><?= $r['kondisi_pulang'] ?></td>
-  <td><?= nl2br($r['obat_pulang']) ?></td>
+  <td style="text-align:center;"><?= $no++ ?></td>
+  <td style="font-size:9px;"><?= date('d/m/Y', strtotime($r['tgl_registrasi'])) ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['nm_poli'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['nm_dokter'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars(substr($r['keluhan_utama'] ?? '-', 0, 80)) ?><?= strlen($r['keluhan_utama'] ?? '') > 80 ? '...' : '' ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['diagnosa_utama'] ?? '-') ?></td>
+  <td style="font-size:9px; text-align:center;"><?= htmlspecialchars($r['kondisi_pulang'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars(substr($r['obat_pulang'] ?? '-', 0, 80)) ?><?= strlen($r['obat_pulang'] ?? '') > 80 ? '...' : '' ?></td>
 </tr>
 <?php } ?>
+</tbody>
 </table>
 <?php } 
 
@@ -1296,46 +2109,47 @@ if ($ri && $ri->num_rows > 0) {
     $ada_resume = true;
 ?>
 <h5>Rawat Inap</h5>
-<table border="1" width="100%" cellpadding="5">
+<table class="tbl-resume">
+<thead>
 <tr>
-  <th>No</th>
-  <th>No Rawat</th>
-  <th>No Registrasi</th>
-  <th>Tanggal</th>
-  <th>Umur</th>
-  <th>Dokter</th>
-  <th>Diagnosa Awal</th>
-  <th>Keluhan</th>
-  <th>Diagnosa Utama</th>
-  <th>Keadaan</th>
-  <th>Cara Keluar</th>
-  <th>Obat Pulang</th>
+  <th width="3%">No</th>
+  <th width="12%">Tanggal</th>
+  <th width="12%">Dokter</th>
+  <th width="15%">Diagnosa Awal</th>
+  <th width="18%">Keluhan Utama</th>
+  <th width="15%">Diagnosa Utama</th>
+  <th width="10%">Keadaan</th>
+  <th width="15%">Obat Pulang</th>
 </tr>
+</thead>
+<tbody>
 <?php
 $no = 1;
 while ($r = $ri->fetch_assoc()) {
 ?>
 <tr>
-  <td><?= $no++ ?></td>
-  <td><?= $r['no_rawat'] ?></td>
-  <td><?= $r['no_reg'] ?></td>
-  <td><?= $r['tgl_registrasi'] ?></td>
-  <td><?= $r['umurdaftar'] ?></td>
-  <td><?= $r['nm_dokter'] ?></td>
-  <td><?= $r['diagnosa_awal'] ?></td>
-  <td><?= nl2br($r['keluhan_utama']) ?></td>
-  <td><?= $r['diagnosa_utama'] ?></td>
-  <td><?= $r['keadaan'] ?></td>
-  <td><?= $r['cara_keluar'] ?></td>
-  <td><?= nl2br($r['obat_pulang']) ?></td>
+  <td style="text-align:center;"><?= $no++ ?></td>
+  <td style="font-size:9px;"><?= date('d/m/Y', strtotime($r['tgl_registrasi'])) ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['nm_dokter'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['diagnosa_awal'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars(substr($r['keluhan_utama'] ?? '-', 0, 80)) ?><?= strlen($r['keluhan_utama'] ?? '') > 80 ? '...' : '' ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars($r['diagnosa_utama'] ?? '-') ?></td>
+  <td style="font-size:9px; text-align:center;"><?= htmlspecialchars($r['keadaan'] ?? '-') ?></td>
+  <td style="font-size:9px;"><?= htmlspecialchars(substr($r['obat_pulang'] ?? '-', 0, 80)) ?><?= strlen($r['obat_pulang'] ?? '') > 80 ? '...' : '' ?></td>
 </tr>
-<?php } } 
+<?php } ?>
+</tbody>
+</table>
+<?php } 
 
 if (!$ada_resume) {
     echo '<p><em>Tidak ada data resume untuk pasien ini.</em></p>';
 }
 ?>
+<?php endif; // end RESUME PASIEN ?>
 
+</body>
+</html>
 
 <?php
 $html = ob_get_clean();

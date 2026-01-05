@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentasi Upload Berkas Pemeriksaan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="bi bi-file-earmark-medical"></i> Dokumentasi Upload Berkas Pemeriksaan</h3>
+            </div>
+            <div class="card-body">
+                
+                <h4>1. Persiapan Sistem</h4>
+                <p>Pastikan langkah-langkah berikut sudah dilakukan:</p>
+                
+                <div class="alert alert-danger">
+                    <strong><i class="bi bi-exclamation-triangle-fill"></i> PENTING - Jalankan Dulu:</strong> 
+                    <ol class="mb-2 mt-2">
+                        <li><strong>Buat tabel database</strong> dengan menjalankan <code>create_table_berkas.php</code></li>
+                        <li>Buat folder dengan menjalankan <code>create_folders.php</code></li>
+                    </ol>
+                    <div class="d-flex gap-2">
+                        <a href="create_table_berkas.php" class="btn btn-danger btn-sm" target="_blank">
+                            <i class="bi bi-database-add"></i> 1. Buat Tabel Database
+                        </a>
+                        <a href="create_folders.php" class="btn btn-warning btn-sm" target="_blank">
+                            <i class="bi bi-folder-plus"></i> 2. Buat Folder
+                        </a>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong><i class="bi bi-info-circle"></i> Database Baru:</strong> 
+                    Sistem ini menggunakan tabel <code>berkas_digital_apotek</code> yang terpisah dan tidak bergantung pada tabel master.
+                </div>
+
+                <h4>2. Folder yang Diperlukan</h4>
+                <p>Sistem akan menyimpan file ke folder sesuai jenis berkas:</p>
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>No</th>
+                            <th>Jenis Berkas</th>
+                            <th>Folder</th>
+                            <th>Kode Database</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>Electroencephalography (EEG)</td><td>hasilpemeriksaaneeg/</td><td>EEG</td></tr>
+                        <tr><td>2</td><td>Hemoglobin A1c (HbA1c)</td><td>hasilpemeriksaanhba1c/</td><td>HBA1C</td></tr>
+                        <tr><td>3</td><td>Mini-Mental State Examination (MMSE)</td><td>hasilpemeriksaanmmse/</td><td>MMSE</td></tr>
+                        <tr><td>4</td><td>Ekokardiografi (ECHO)</td><td>hasilpemeriksaanecho/</td><td>ECHO</td></tr>
+                        <tr><td>5</td><td>ECHO Pediatrik</td><td>hasilpemeriksaanechopediatrik/</td><td>ECHOPED</td></tr>
+                        <tr><td>6</td><td>Elektrokardiogram (EKG)</td><td>hasilpemeriksaanekg/</td><td>EKG</td></tr>
+                        <tr><td>7</td><td>Optical Coherence Tomography (OCT)</td><td>hasilpemeriksaanoct/</td><td>OCT</td></tr>
+                        <tr><td>8</td><td>Slit Lamp</td><td>hasilpemeriksaanslitlamp/</td><td>SLITLAMP</td></tr>
+                        <tr><td>9</td><td>Treadmill</td><td>hasilpemeriksaantreadmill/</td><td>TREADMILL</td></tr>
+                        <tr><td>10</td><td>USG</td><td>hasilpemeriksaanusg/</td><td>USG</td></tr>
+                        <tr><td>11</td><td>USG Gynecologi</td><td>hasilpemeriksaanusggynecologi/</td><td>USGGYN</td></tr>
+                        <tr><td>12</td><td>USG Neonatus</td><td>hasilpemeriksaanusgneonatus/</td><td>USGNEO</td></tr>
+                        <tr><td>13</td><td>USG Urologi</td><td>hasilpemeriksaanusgurologi/</td><td>USGURO</td></tr>
+                        <tr><td>14</td><td>Endoskopi Faring Laring</td><td>hasilpemeriksaanendoskopifaringlaring/</td><td>ENDOFAR</td></tr>
+                        <tr><td>15</td><td>Endoskopi Hidung</td><td>hasilpemeriksaanendoskopihidung/</td><td>ENDOHID</td></tr>
+                        <tr><td>16</td><td>Endoskopi Telinga</td><td>hasilpemeriksaanendoskopitelinga/</td><td>ENDOTEL</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>3. Cara Menggunakan</h4>
+                <ol>
+                    <li>Buka halaman preview pasien: <code>previewriwayat.php?no_rkm_medis=XXXXXX</code></li>
+                    <li>Cari form <strong>"Upload Berkas Pemeriksaan"</strong> (dengan background hijau)</li>
+                    <li>Pilih <strong>Jenis Berkas</strong> yang sesuai</li>
+                    <li>Pilih <strong>File</strong> dari komputer (format: JPG, PNG, PDF, DOC, DOCX)</li>
+                    <li>Klik tombol <strong>"Upload Berkas"</strong></li>
+                    <li>Tunggu proses upload selesai</li>
+                    <li>Halaman akan otomatis refresh dan file akan muncul di tab yang sesuai</li>
+                </ol>
+
+                <h4>4. Validasi Upload</h4>
+                <div class="alert alert-info">
+                    <ul class="mb-0">
+                        <li><strong>Format file:</strong> JPG, JPEG, PNG, PDF, DOC, DOCX</li>
+                        <li><strong>Ukuran maksimal:</strong> 5 MB</li>
+                        <li><strong>Nama file:</strong> Akan otomatis diganti menjadi format: <code>no_rkm_medis_timestamp.ext</code></li>
+                        <li><strong>Perilaku:</strong> Upload file baru akan menggantikan file lama untuk jenis berkas yang sama</li>
+                    </ul>
+                </div>
+
+                <h4>5. Struktur Database</h4>
+                <p>Data berkas disimpan di tabel <code>berkas_digital_apotek</code> (tabel baru khusus) dengan struktur:</p>
+                <pre class="bg-light p-3 rounded">
+CREATE TABLE `berkas_digital_apotek` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `no_rkm_medis` VARCHAR(15) NOT NULL,
+    `kode_berkas` VARCHAR(20) NOT NULL,
+    `nama_berkas` VARCHAR(100) NOT NULL,
+    `lokasi_file` TEXT NOT NULL,
+    `tgl_upload` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_berkas` (`no_rkm_medis`, `kode_berkas`),
+    KEY `no_rkm_medis` (`no_rkm_medis`),
+    KEY `kode_berkas` (`kode_berkas`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+                </pre>
+
+                <div class="alert alert-success">
+                    <strong><i class="bi bi-check-circle"></i> Keuntungan Tabel Baru:</strong>
+                    <ul class="mb-0">
+                        <li>Tidak ada foreign key constraint</li>
+                        <li>Lebih sederhana - hanya berdasarkan no_rkm_medis</li>
+                        <li>Tidak tergantung tabel master_berkas_digital</li>
+                        <li>Ada timestamp untuk tracking upload</li>
+                        <li>Unique constraint mencegah duplikasi berkas</li>
+                    </ul>
+                </div>
+
+                <h4>6. Perilaku Update/Insert</h4>
+                <p>Sistem akan melakukan:</p>
+                <ul>
+                    <li><strong>UPDATE:</strong> Jika sudah ada berkas dengan kode yang sama untuk no_rkm_medis tertentu, file lama akan diganti dengan file baru</li>
+                    <li><strong>INSERT:</strong> Jika belum ada berkas dengan kode tersebut untuk pasien ini</li>
+                    <li><strong>Unique Constraint:</strong> Setiap pasien hanya bisa memiliki satu file per jenis berkas</li>
+                </ul>
+
+                <h4>7. File yang Dibuat</h4>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>File</th>
+                        <th>Fungsi</th>
+                    </tr>
+                    <tr>
+                        <td><code>create_table_berkas.php</code></td>
+                        <td>Script untuk membuat tabel berkas_digital_apotek</td>
+                    </tr>
+                    <tr>
+                        <td><code>upload_berkas.php</code></td>
+                        <td>Handler backend untuk proses upload dan simpan ke database</td>
+                    </tr>
+                    <tr>
+                        <td><code>previewriwayat.php</code></td>
+                        <td>Halaman preview dengan form upload terintegrasi</td>
+                    </tr>
+                    <tr>
+                        <td><code>create_folders.php</code></td>
+                        <td>Script untuk membuat folder-folder yang diperlukan</td>
+                    </tr>
+                    <tr>
+                        <td><code>dokumentasi_upload.html</code></td>
+                        <td>Halaman dokumentasi ini</td>
+                    </tr>
+                </table>
+
+                <h4>8. Troubleshooting</h4>
+                <div class="accordion" id="troubleshootAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble0">
+                                Error: Table doesn't exist
+                            </button>
+                        </h2>
+                        <div id="trouble0" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+                            <div class="accordion-body">
+                                <strong>Solusi:</strong>
+                                <ul>
+                                    <li>Jalankan script <code>create_table_berkas.php</code> untuk membuat tabel</li>
+                                    <li>Pastikan database name sudah benar di config</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble1">
+                                Error: Gagal menyimpan file di server
+                            </button>
+                        </h2>
+                        <div id="trouble1" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+                            <div class="accordion-body">
+                                <strong>Solusi:</strong>
+                                <ul>
+                                    <li>Pastikan folder tujuan sudah ada (jalankan <code>create_folders.php</code>)</li>
+                                    <li>Periksa permission folder (harus writable/777)</li>
+                                    <li>Periksa setting <code>upload_max_filesize</code> di php.ini</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble2">
+                                Error: Gagal menyimpan ke database
+                            </button>
+                        </h2>
+                        <div id="trouble2" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+                            <div class="accordion-body">
+                                <strong>Solusi:</strong>
+                                <ul>
+                                    <li>Periksa struktur tabel <code>berkas_digital_perawatan</code></li>
+                                    <li>Pastikan kolom kode cukup panjang (VARCHAR minimal 10)</li>
+                                    <li>Periksa koneksi database di <code>conf/conf.php</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble3">
+                                File tidak muncul setelah upload
+                            </button>
+                        </h2>
+                        <div id="trouble3" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+                            <div class="accordion-body">
+                                <strong>Solusi:</strong>
+                                <ul>
+                                    <li>Refresh halaman (F5)</li>
+                                    <li>Periksa apakah data masuk ke database</li>
+                                    <li>Periksa apakah file ada di folder yang sesuai</li>
+                                    <li>Periksa query di tab yang sesuai untuk menampilkan data berkas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="text-center">
+                    <a href="previewriwayat.php?no_rkm_medis=" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Kembali ke Preview
+                    </a>
+                    <a href="create_table_berkas.php" class="btn btn-danger" target="_blank">
+                        <i class="bi bi-database-add"></i> Buat Tabel
+                    </a>
+                    <a href="create_folders.php" class="btn btn-success" target="_blank">
+                        <i class="bi bi-folder-plus"></i> Buat Folder
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
