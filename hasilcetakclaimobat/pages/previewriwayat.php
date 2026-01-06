@@ -1107,72 +1107,87 @@ if ($result && mysqli_num_rows($result) > 0) {
 
 
 <!-- TAB ECHO -->
+<?php
+$no_rkm_medis = $_GET['no_rkm_medis'] ?? '';
+
+// Query untuk ECHO dari tabel berkas_digital_apotek
+$q_echo = mysqli_query($koneksi, "
+    SELECT 
+        b.id,
+        b.kode_berkas,
+        b.nama_berkas AS jenis_berkas,
+        b.lokasi_file,
+        b.tgl_upload,
+        CASE 
+            WHEN b.kode_berkas = 'echo_pediatrik' THEN 'Pediatrik'
+            ELSE 'Biasa'
+        END AS jenis
+    FROM berkas_digital_apotek b
+    WHERE b.no_rkm_medis = '$no_rkm_medis'
+        AND (b.kode_berkas = 'echo' OR b.kode_berkas = 'echo_pediatrik')
+    ORDER BY b.tgl_upload DESC
+");
+
+if (!$q_echo) {
+    die("Query Error: " . mysqli_error($koneksi));
+}
+?>
+
 <div class="tab-pane fade" id="echo">
-  <table class="table table-sm table-bordered">
+  <table class="table table-sm table-bordered table-hover align-middle">
     <thead class="table-light">
       <tr>
         <th width="8%" class="text-center">
-  <label class="form-check-label small">
-    <input type="checkbox" class="check-all-tab me-1">
-    Pilih semua
-  </label>
-</th>
-        <th width="5%">No</th>
-        <th width="30%">Nomor Rawat</th>
-        <th width="20%">Jenis</th>
-        <th>Hasil</th>
+          <label class="form-check-label small">
+            <input type="checkbox" class="check-all-tab me-1">
+            Pilih semua
+          </label>
+        </th>
+        <th width="5%" class="text-center">No</th>
+        <th width="25%" class="text-center">Jenis Berkas</th>
+        <th width="20%" class="text-center">Tanggal Upload</th>
+        <th class="text-center">File</th>
       </tr>
     </thead>
     <tbody>
+      <?php
+      if ($q_echo && mysqli_num_rows($q_echo) > 0) {
+          $no = 1;
+          while ($echo = mysqli_fetch_assoc($q_echo)) {
+              $file_db  = $echo['lokasi_file'];
+              $file_fs  = $_SERVER['DOCUMENT_ROOT'] . "/webapps/" . $file_db;
+              $file_url = "http://localhost/webapps/" . $file_db;
+      ?>
       <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="1"></td>
-        <td>1</td>
-        <td>2025/06/18/00001</td>
-        <td><span class="badge bg-info">Pediatrik</span></td>
-        <td>ECHO Jantung Anak</td>
+        <td class="text-center">
+          <input type="checkbox" class="row-check" name="echo_id[]" value="<?= htmlspecialchars($echo['id']) ?>">
+        </td>
+        <td class="text-center"><?= $no++ ?></td>
+        <td>
+          <strong><?= $echo['jenis_berkas'] ? htmlspecialchars($echo['jenis_berkas']) : '<em class="text-muted">-</em>' ?></strong>
+          <br><small class="text-muted">Kode: <?= htmlspecialchars($echo['kode_berkas']) ?></small>
+        </td>
+        <td class="text-center">
+          <small><?= date('d/m/Y H:i', strtotime($echo['tgl_upload'])) ?></small>
+        </td>
+        <td>
+          <?php if (!empty($file_db) && file_exists($file_fs)) { ?>
+            <a href="<?= $file_url ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-file-earmark"></i> <?= basename($file_db) ?>
+            </a>
+          <?php } else { ?>
+            <span class="text-danger"><em>File tidak ditemukan</em></span>
+          <?php } ?>
+        </td>
       </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="2"></td>
-        <td>2</td>
-        <td>2025/06/18/00002</td>
-        <td><span class="badge bg-warning text-dark">Biasa</span></td>
-        <td>ECHO Jantung Dewasa</td>
+      <?php
+          }
+      } else {
+      ?>
+      <tr>
+        <td colspan="5" class="text-center text-muted py-3">Tidak ada data ECHO</td>
       </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="3"></td>
-        <td>3</td>
-        <td>2025/06/18/00003</td>
-        <td><span class="badge bg-info">Pediatrik</span></td>
-        <td>ECHO Jantung Anak</td>
-      </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="4"></td>
-        <td>4</td>
-        <td>2025/06/18/00004</td>
-        <td><span class="badge bg-warning text-dark">Biasa</span></td>
-        <td>ECHO Jantung Dewasa</td>
-      </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="5"></td>
-        <td>5</td>
-        <td>2025/06/18/00005</td>
-        <td><span class="badge bg-info">Pediatrik</span></td>
-        <td>ECHO Jantung Anak</td>
-      </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="6"></td>
-        <td>6</td>
-        <td>2025/06/18/00006</td>
-        <td><span class="badge bg-warning text-dark">Biasa</span></td>
-        <td>ECHO Jantung Dewasa</td>
-      </tr>
-      <tr class="riwayat-row">
-        <td><input type="checkbox" class="row-check" name="echo_id[]" value="7"></td>
-        <td>7</td>
-        <td>2025/06/18/00007</td>
-        <td><span class="badge bg-info">Pediatrik</span></td>
-        <td>ECHO Jantung Anak</td>
-      </tr>
+      <?php } ?>
     </tbody>
   </table>
 </div>
